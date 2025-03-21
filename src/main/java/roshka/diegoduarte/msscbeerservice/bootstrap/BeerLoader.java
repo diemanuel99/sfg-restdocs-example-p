@@ -9,6 +9,7 @@ import java.math.BigDecimal;
 
 @Component
 public class BeerLoader implements CommandLineRunner {
+
     private final BeerRepository beerRepository;
 
     public BeerLoader(BeerRepository beerRepository) {
@@ -21,7 +22,8 @@ public class BeerLoader implements CommandLineRunner {
     }
 
     private void loadBeerObjects() {
-        if (0 == beerRepository.count()) {
+        if(beerRepository.count() == 0){
+
             beerRepository.save(Beer.builder()
                     .beerName("Mango Bobs")
                     .beerStyle("IPA")

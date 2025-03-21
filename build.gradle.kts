@@ -2,13 +2,14 @@ plugins {
     java
     id("org.springframework.boot") version "3.4.3"
     id("io.spring.dependency-management") version "1.1.7"
-    id("org.asciidoctor.jvm.convert") version "3.3.2"
+    id("org.asciidoctor.jvm.convert") version "4.0.4"
 }
-
-var snippetsDir = file("build/generated-snippets")
+val snippetsDir = file("build/generated-snippets")
+val outDir = file("build/generated-docs")
 var mapstructVersion = "1.6.3"
 var lombokVersion = "1.18.36"
 var lombokMapstructBindingVersion = "0.2.0"
+val asciidoctorExt: Configuration by configurations.creating
 
 group = "roshka.diegoduarte"
 version = "0.0.1-SNAPSHOT"
@@ -23,7 +24,6 @@ configurations {
     compileOnly {
         extendsFrom(configurations.annotationProcessor.get())
     }
-    create("asciidoctorExt")
 }
 
 repositories {
@@ -53,21 +53,27 @@ dependencies {
     testImplementation ("org.mockito:mockito-junit-jupiter:5.16.0")
     //database
     runtimeOnly ("com.h2database:h2")
-
-    "asciidoctorExt" ("org.springframework.restdocs:spring-restdocs-asciidoctor")
-    testImplementation ("org.springframework.restdocs:spring-restdocs-mockmvc")
+    asciidoctorExt ("org.springframework.restdocs:spring-restdocs-asciidoctor:3.0.3")
+    testImplementation ("org.springframework.restdocs:spring-restdocs-mockmvc:3.0.3")
 }
 
 tasks.withType<Test> {
     useJUnitPlatform()
-    outputs.dir(snippetsDir)
 }
 tasks.withType<JavaCompile> {
     options.compilerArgs.add("-Amapstruct.defaultComponentModel=spring")
 }
-
-val asciidoctor by tasks.existing(org.asciidoctor.gradle.jvm.AsciidoctorTask::class) {
-    inputs.dir(snippetsDir)
+tasks.test{
+    outputs.dir(snippetsDir)
+}
+tasks.asciidoctor{
     configurations("asciidoctorExt")
+    inputs.dir(snippetsDir)
     dependsOn(tasks.test)
+}
+tasks.bootJar {
+    dependsOn(tasks.asciidoctor)
+            from ("${tasks.asciidoctor.get().outputDir}/html5") {
+                into("static/docs")
+            }
 }
